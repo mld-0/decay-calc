@@ -53,17 +53,44 @@ logging.basicConfig(level=logging.DEBUG, format=_logging_format, datefmt=_loggin
 
 class DecayCalc(object):
 
+    threshold_halflife_count = 8
+
     #   Given <arguments>, (call methods to) get lists of data from file(s) in arg_data_dir, and return list of calculated qtys remaining for each datetime in arg_dt_list 
     def CalculateFromFilesRange_Monthly(self, arg_dt_list, arg_data_dir, arg_halflife, arg_onset, arg_file_prefix, arg_file_postfix):
         pass
-    
-    #   About: Given (sorted list of datetimes) arg_dt_items, and corresponding list arg_qty_items, (assuming expodential decay of arg_halflife and linear onset of arg_onset), find the qty remaining at each datetime in arg_dt_list 
-    def Calculate(self, arg_dt_list, arg_dt_items, arg_qty_items, arg_halflife, arg_onset):
-        pass
+
+    #   About: given lists arg_qty_items/arg_dt_items, (assuming expodential decay of arg_halflife and linear onset of arg_onset), find the qty remaining at arg_dt
+    def CalculateAtDT(self, arg_dt, arg_dt_items, arg_qty_items, arg_halflife, arg_onset):
+    #   {{{
+        result_qty = Decimal(0.0)
+        for loop_dt, loop_qty in zip(arg_dt_items, arg_qty_items):
+            #   Reconcile timezones 
+            if (loop_dt.tzinfo is None) and (arg_dt.tzinfo is not None):
+                loop_dt = loop_dt.replace(tzinfo = arg_dt.tzinfo)
+            elif (arg_dt.tzinfo is None) and (loop_dt.tzinfo is not None):
+                arg_dt = arg_dt.replace(tzinfo = loop_dt.tzinfo)
+            #   get difference between arg_dt and loop_dt in seconds
+            #_log.debug("loop_dt=(%s)" % str(loop_dt))
+            loop_delta_s = (arg_dt - loop_dt).total_seconds()
+            #_log.debug("loop_delta_s=(%s)" % str(loop_delta_s))
+            loop_result_qty = Decimal(0.0)
+            if (loop_delta_s > arg_onset) and (loop_delta_s < arg_halflife * self.threshold_halflife_count):
+                loop_hl_fraction = loop_delta_s / arg_halflife
+                #_log.debug("loop_hl_fraction=(%s)" % str(loop_hl_fraction))
+                loop_result_qty = loop_qty * Decimal(0.5) ** Decimal(loop_hl_fraction)
+            elif (loop_delta_s > 0) and (loop_delta_s < arg_halflife * self.threshold_halflife_count):
+                loop_result_qty = loop_qty * Decimal(loop_delta_s / arg_onset)
+            #_log.debug("loop_result_qty=(%s)" % str(loop_result_qty))
+            result_qty += loop_result_qty
+        _log.debug("result_qty=(%s)" % str(result_qty))
+    #   }}}
 
     #   About: Get a list of the files in arg_data_dir, where each file is of the format 'arg_file_prefix + date_str + arg_file_postfix', and date_str is %Y-%m for each year and month between one month before arg_dt_first, and arg_dt_last
     def _GetFiles_Monthly(self, arg_data_dir, arg_file_prefix, arg_file_postfix, arg_dt_first, arg_dt_last):
     #   {{{
+        #   Get list of year/month strings for months between arg_dt_first/arg_dt_last, inclusive, plus the month before arg_dt_first
+        if (arg_dt_first > arg_dt_last):
+            raise Exception("Invalid arg_dt_first=(%s) > arg_dt_last=(%s)" % (str(arg_dt_first), str(arg_dt_last)))
         _dt_format_convertrange = '%Y-%m-%dT%H:%M:%S%Z'
         _dt_format_output = '%Y-%m'
         _dt_freq = 'MS'
@@ -93,6 +120,7 @@ class DecayCalc(object):
 
     #   About: Given a list of files, get as a list qtys and datetimes (from columns arg_col_qty and arg_col_dt), for lines where value in column arg_col_label==arg_label (if arg_label is not None, otherwise read every line). Return [ results_dt, results_qty ] lists, sorted chronologicaly 
     def _ReadData(self, arg_files_list, arg_label, arg_col_dt, arg_col_qty, arg_col_label, arg_delim):
+    #   {{{
         _log.debug("arg_label=(%s)" % str(arg_label))
         _log.debug("arg_delim=(%s)" % str(arg_delim))
         _log.debug("cols: (dt, qty, label)=(%s, %s, %s)" % (arg_col_dt, arg_col_qty, arg_col_label))
@@ -107,31 +135,30 @@ class DecayCalc(object):
                     loop_qty_str = loop_line_split[arg_col_qty]
                     loop_dt_str = loop_line_split[arg_col_dt]
                     loop_qty = Decimal(loop_qty_str)
-
-
-                    #   Continue: 2021-01-02T19:17:24AEST decaycalc, parsing of ()-() 'DTS' format datetimes, transform to iso (parseable) format
-                    #loop_dt_str = loop_dt_str.replace(")-(", " ")
-                    #loop_dt_str = loop_dt_str.replace("(", "")
-                    #loop_dt_str = loop_dt_str.replace(")", "")
-
-                    _log.debug("loop_dt_str=(%s)" % str(loop_dt_str))
+                    #   If datetime is in 'dts' format, i.e: (2021-01-02)-(21-17-11), transform to iso format
+                    regex_dts = r"\((\d{4}-\d{2}-\d{2})\)-\((\d{2})-(\d{2})-?(\d{2})\)"
+                    _match_regex = re.match(regex_dts, loop_dt_str)
+                    if (_match_regex is not None):
+                        loop_dt_str = _match_regex.group(1) + "T" + _match_regex.group(2) + ":" + _match_regex.group(3) + ":" + _match_regex.group(4)
                     loop_dt = dateparser.parse(loop_dt_str)
-
-                    _log.debug("loop_qty=(%s)" % str(loop_qty))
-                    _log.debug("loop_dt=(%s)" % str(loop_dt))
-
+                    if (loop_dt is None):
+                        raise Exception("Failed to parse loop_dt_str=(%s)" % str(loop_dt_str))
+                    #_log.debug("loop_dt_str=(%s)" % str(loop_dt_str))
+                    #_log.debug("loop_qty=(%s)" % str(loop_qty))
+                    #_log.debug("loop_dt=(%s)" % str(loop_dt))
                     results_dt.append(loop_dt)
                     results_qty.append(loop_qty)
         if (len(results_dt) != len(results_qty)):
             raise Exception("mismatch, len(results_dt)=(%s), len(results_qty)=(%s)" % (str(len(results_dt)), str(len(results_qty))))
         _log.debug("len(results)=(%s)" % str(len(results_dt)))
         return [ results_dt, results_qty ]
+        #   }}}
 
 
     #   About: Given a path to gpg encrypted file, decrypt file using system gpg/keychain, raise Exception if file is not decryptable, or if it doesn't exist
     def _DecryptGPGFileToString(self, arg_path_file):
     #   {{{
-        _log.debug("arg_path_file:\n%s" % str(arg_path_file))
+        _log.debug("file=(%s)" % str(os.path.basename(arg_path_file)))
         cmd_gpg_decrypt = ["gpg", "-q", "--decrypt", arg_path_file ]
         p = Popen(cmd_gpg_decrypt, stdout=PIPE, stdin=PIPE, stderr=PIPE)
         result_data_decrypt, result_stderr = p.communicate()
