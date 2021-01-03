@@ -43,7 +43,8 @@ class Test_CliScan(unittest.TestCase):
     decaycalc = DecayCalc()
     prefix = "Schedule.calc."
     postfix = ".vimgpg"
-    dt_analyse = dateparser.parse("2021-01-02T17:34:42AEST")
+    day_analyse = dateparser.parse("2021-01-03T00:00:00AEST")
+    dt_analyse = dateparser.parse("2021-01-03T14:13:42AEST")
     dt_start = dateparser.parse("2021-01-01T16:08:18AEST")
     dt_end = dateparser.parse("2021-01-02T16:08:18AEST")
     label = "D-IR"
@@ -52,10 +53,18 @@ class Test_CliScan(unittest.TestCase):
     col_dt = 3
     delim = ","
     onset = 20 * 60
-    halflife = 45 * 60
+    halflife = 40 * 60
 
     def test_helloworld(self):
         pass
+
+    def test_CalculateRangeForDay(self):
+        located_filepaths = self.decaycalc._GetFiles_Monthly(self._data_dir, self.prefix, self.postfix, self.dt_start, self.dt_end)
+        results_dt, results_qty = self.decaycalc._ReadData(located_filepaths, self.label, self.col_dt, self.col_qty, self.col_label, self.delim)
+        #_log.debug("results_qty=(%s)" % str(results_qty))
+        _result_dt_list, _result_qty_list = self.decaycalc.CalculateRangeForDay(self.day_analyse, results_dt, results_qty, self.halflife, self.onset)
+        self.decaycalc.PlotResultsForDay(_result_dt_list, _result_qty_list)
+
 
     def test_GetFiles_Monthly(self):
         _results = self.decaycalc._GetFiles_Monthly(self._data_dir, self.prefix, self.postfix, self.dt_start, self.dt_end)
