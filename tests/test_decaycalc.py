@@ -45,7 +45,7 @@ class Test_DecayCalc(unittest.TestCase):
     timeplot = TimePlot()
 
     #   Set True to open output directory in Finder 
-    _flag_openPlots = False
+    _flag_openPlots = True
 
     _data_dir = os.environ.get('mld_logs_schedule')
     _output_dir = os.path.join(tempfile.gettempdir(), "test-decaycalc")
@@ -58,23 +58,27 @@ class Test_DecayCalc(unittest.TestCase):
 
     prefix = "Schedule.calc."
     postfix = ".vimgpg"
-    day_analyse = dateparser.parse("2021-01-04T00:00:00AEST")
+
+    #day_analyse = dateparser.parse("2021-01-04T00:00:00AEST")
+    day_analyse = dateparser.parse("2021-01-03")
+
     dt_analyse = dateparser.parse("2021-01-03T14:13:42AEST")
     dt_start = dateparser.parse("2021-01-01T16:08:18AEST")
     dt_end = dateparser.parse("2021-01-02T16:08:18AEST")
     label = "D-IR"
+    label = "Can-S"
     col_label = 0
     col_qty = 1
     col_dt = 3
     delim = ","
     onset = 20 * 60
-    halflife = 40 * 60
+    halflife = 30 * 60
 
     def test_GetDatetimesFirstAndLast_FromFileList(self):
         located_filepaths = self.timeplot._GetAvailableFiles_Monthly(self._data_dir, self.prefix, self.postfix)
         dt_first, dt_last = self.timeplot._GetDatetimesFirstAndLast_FromFileList(located_filepaths, self.col_dt, self.delim)
 
-    if (False):
+    if (True):
         def test_GetAvailableFiles_Monthly(self):
             located_filepaths = self.timeplot._GetAvailableFiles_Monthly(self._data_dir, self.prefix, self.postfix)
         def test_CalculateRangeForDay(self):

@@ -140,7 +140,7 @@ class TimePlot(object):
             ax.plot([_now], [_now_y], marker='o', markersize=3, color='red')
         myFmt = DateFormatter("%H")
         ax.xaxis.set_major_formatter(myFmt)
-        ax.set_ylim(0, 15)
+#        ax.set_ylim(0, 15)
         ax.set_xlim(arg_result_dt_nonetzinfo[0], arg_result_dt_nonetzinfo[-1])
         ax.xaxis.set_major_locator(MultipleLocator((1/24)))
         ax.yaxis.set_minor_locator(AutoMinorLocator(1))
