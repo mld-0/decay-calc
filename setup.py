@@ -22,6 +22,7 @@ test_depend = [
     'tzlocal'
     'pytz'
     'dateparser'
+    'matplotlib'
 ]
 
 setup(

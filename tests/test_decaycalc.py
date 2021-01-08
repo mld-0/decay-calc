@@ -30,7 +30,7 @@ from dateutil.relativedelta import relativedelta
 from matplotlib.dates import DateFormatter
 #   }}}1
 from decaycalc.decaycalc import DecayCalc
-from decaycalc.timeplot import TimePlot
+from timeplot.timeplot import TimePlot
 #   {{{1
 
 #   debug logging

@@ -5,4 +5,4 @@ freezegun
 pytz
 tzlocal
 dateparser
-
+matplotlib
