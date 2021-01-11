@@ -92,9 +92,10 @@ class DecayCalc(object):
     #   About: given lists arg_qty_items/arg_dt_items, (assuming expodential decay of arg_halflife and linear onset of arg_onset), find the qty remaining at arg_dt
     def CalculateAtDT(self, arg_dt, arg_dt_items, arg_qty_items, arg_halflife, arg_onset):
     #   {{{
-        #_log.debug("arg_dt=(%s)" % str(arg_dt))
         result_qty = Decimal(0.0)
+        _log.debug("arg_dt=(%s)" % str(arg_dt))
         for loop_dt, loop_qty in zip(arg_dt_items, arg_qty_items):
+            #_log.debug("loop_dt=(%s)" % str(loop_dt))
             #   Reconcile timezones 
             if (loop_dt.tzinfo is None) and (arg_dt.tzinfo is not None):
                 loop_dt = loop_dt.replace(tzinfo = arg_dt.tzinfo)
@@ -103,24 +104,17 @@ class DecayCalc(object):
             #   get difference between arg_dt and loop_dt in seconds
             loop_printdebug = False
             loop_delta_s = (arg_dt - loop_dt).total_seconds()
+            #_log.debug("loop_delta_s=(%s)" % str(loop_delta_s))
             loop_result_qty = Decimal(0.0)
             if (loop_delta_s > arg_onset) and (loop_delta_s < arg_halflife * self.threshold_halflife_count):
                 loop_hl_fraction = (loop_delta_s - arg_onset) / arg_halflife
-                if loop_printdebug:
-                    _log.debug("loop_dt=(%s)" % str(loop_dt))
-                    _log.debug("loop_delta_s=(%s)" % str(loop_delta_s))
-                    _log.debug("loop_hl_fraction=(%s)" % str(loop_hl_fraction))
-                    _log.debug("loop_result_qty=(%s)" % str(loop_result_qty))
                 loop_result_qty = loop_qty * Decimal(0.5) ** Decimal(loop_hl_fraction)
+                #_log.debug("loop_hl_fraction=(%s)" % str(loop_hl_fraction))
             elif (loop_delta_s > 0) and (loop_delta_s < arg_halflife * self.threshold_halflife_count):
                 loop_result_qty = loop_qty * Decimal(loop_delta_s / arg_onset)
-                if loop_printdebug:
-                    _log.debug("loop_dt=(%s)" % str(loop_dt))
-                    _log.debug("loop_delta_s=(%s)" % str(loop_delta_s))
-                    _log.debug("loop_hl_fraction=(%s)" % str(loop_hl_fraction))
-                    _log.debug("loop_result_qty=(%s)" % str(loop_result_qty))
+            #_log.debug("loop_result_qty=(%s)" % str(loop_result_qty))
             result_qty += loop_result_qty
-        #_log.debug("result_qty=(%s)" % str(result_qty))
+        _log.debug("result_qty=(%s)" % str(result_qty))
         return result_qty
     #   }}}
 
