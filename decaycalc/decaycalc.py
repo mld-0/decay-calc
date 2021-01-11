@@ -93,7 +93,7 @@ class DecayCalc(object):
     def CalculateAtDT(self, arg_dt, arg_dt_items, arg_qty_items, arg_halflife, arg_onset):
     #   {{{
         result_qty = Decimal(0.0)
-        _log.debug("arg_dt=(%s)" % str(arg_dt))
+        #_log.debug("arg_dt=(%s)" % str(arg_dt))
         for loop_dt, loop_qty in zip(arg_dt_items, arg_qty_items):
             #_log.debug("loop_dt=(%s)" % str(loop_dt))
             #   Reconcile timezones 
@@ -114,7 +114,7 @@ class DecayCalc(object):
                 loop_result_qty = loop_qty * Decimal(loop_delta_s / arg_onset)
             #_log.debug("loop_result_qty=(%s)" % str(loop_result_qty))
             result_qty += loop_result_qty
-        _log.debug("result_qty=(%s)" % str(result_qty))
+        #_log.debug("result_qty=(%s)" % str(result_qty))
         return result_qty
     #   }}}
 
